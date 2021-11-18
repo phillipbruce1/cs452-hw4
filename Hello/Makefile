@@ -24,5 +24,8 @@ uninstall:
 TryHello: TryHello.c
 	gcc -o $@ $< -Wall -g
 
+TryScanner: TryScanner.c
+	gcc -o $@ $< -Wall -g
+
 try: TryHello
 	./$<

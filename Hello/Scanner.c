@@ -10,6 +10,8 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("BSU CS 452 HW4");
 MODULE_AUTHOR("<phillipbruce@u.boisestate.edu>");
 
+// TODO: figure out why seg fault on onyx and pkill on local vm - somewhere in ioctl?
+
 typedef struct {
     dev_t devno;
     struct cdev cdev;
@@ -24,6 +26,12 @@ static Device device;
 
 static char *separators;
 
+/**
+ * Opens a scanner
+ * @param inode
+ * @param filp
+ * @return
+ */
 static int open(struct inode *inode, struct file *filp) {
     File *file = (File *) kmalloc(sizeof(*file), GFP_KERNEL);
     if (!file) {
@@ -49,6 +57,14 @@ static int release(struct inode *inode, struct file *filp) {
     return 0;
 }
 
+/**
+ * Copy from buf to file from kernel to user space
+ * @param filp
+ * @param buf
+ * @param count
+ * @param f_pos
+ * @return
+ */
 static ssize_t read(struct file *filp,
                     char *buf,
                     size_t count,
@@ -64,6 +80,14 @@ static ssize_t read(struct file *filp,
     return n;
 }
 
+/**
+ * When separators == 0, initialize separators with buf. Otherwise, write file to buf from user to kernel space
+ * @param filp
+ * @param buf
+ * @param count
+ * @param f_pos
+ * @return
+ */
 static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) {
     if (separators == 0) {
         separators = (char *) kmalloc(sizeof(char *) * strlen(buf), GFP_KERNEL);
@@ -86,6 +110,13 @@ static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) 
     }
 }
 
+/**
+ * Resets separators when cmd == 0
+ * @param filp
+ * @param cmd
+ * @param arg
+ * @return
+ */
 static long ioctl(struct file *filp,
                   unsigned int cmd,
                   unsigned long arg) {
@@ -111,10 +142,11 @@ my_init(void) {
     // set default separators
     separators = (char *) kmalloc(sizeof(char *) * 2, GFP_KERNEL);
     if (!separators) {
-        printk(KERN_ERR "%s: kmalloc() failed\n", DEVNAME);
+        printk(KERN_ERR
+        "%s: kmalloc() failed\n", DEVNAME);
         return -ENOMEM;
     }
-    separators = " ,";
+    separators = ",:";
     // other stuff
     const char *s = "Hello world!\n";
     int err;

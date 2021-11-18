@@ -1,6 +1,6 @@
 PATH=/usr/bin:/bin:/sbin
 
-name:=Hello
+name:=Scanner
 module:=$(name).ko
 
 obj-m:=$(name).o
@@ -27,5 +27,5 @@ TryHello: TryHello.c
 TryScanner: TryScanner.c
 	gcc -o $@ $< -Wall -g
 
-try: TryHello
+try: TryScanner
 	./$<

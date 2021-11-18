@@ -71,6 +71,7 @@ static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) 
             printk("%s: kmalloc() failed\n", DEVNAME);
             return -ENOMEM;
         }
+        // TODO: set separators = buf
         return strlen(buf);
     } else {
         File *file = filp->private_data;

@@ -16,15 +16,16 @@ typedef struct {
     dev_t devno;
     struct cdev cdev;
     char *s;
+    char *defaultSeparators;
 } Device;            /* per-init() data */
 
 typedef struct {
     char *s;
+    char *separators;
+    int *newSeparators;
 } File;                /* per-open() data */
 
 static Device device;
-
-static char *separators;
 
 /**
  * Opens a scanner
@@ -46,6 +47,13 @@ static int open(struct inode *inode, struct file *filp) {
         return -ENOMEM;
     }
     strcpy(file->s, device.s);
+    file->separators = (char *) kmalloc(sizeof(char *) * 2, GFP_KERNEL);
+    if (!file->separators) {
+        printk(KERN_ERR
+        "%s: kmalloc() failed\n", DEVNAME);
+        return -ENOMEM;
+    }
+    file->separators = ",;";
     filp->private_data = file;
     return 0;
 }
@@ -89,16 +97,16 @@ static ssize_t read(struct file *filp,
  * @return
  */
 static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) {
-    if (separators == 0) {
-        separators = (char *) kmalloc(sizeof(char *) * strlen(buf), GFP_KERNEL);
-        if (!separators) {
+    File *file = filp->private_data;
+    if (file->separators == 0) {
+        file->separators = (char *) kmalloc(sizeof(char *) * strlen(buf), GFP_KERNEL);
+        if (!file->separators) {
             printk("%s: kmalloc() failed\n", DEVNAME);
             return -ENOMEM;
         }
         // TODO: set separators = buf
         return strlen(buf);
     } else {
-        File *file = filp->private_data;
         int n = strlen(buf);
         n = (n < count ? n : count);
         if (copy_from_user(file->s, buf, n)) {
@@ -120,11 +128,12 @@ static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) 
 static long ioctl(struct file *filp,
                   unsigned int cmd,
                   unsigned long arg) {
-    if (cmd != 0)
-        return 0;
-    if (separators)
-        kfree(separators);
-    separators = 0;
+    File *file = filp->private_data;
+    if (cmd == 0) {
+        if (file->separators)
+            kfree(file->separators);
+        file->separators = 0;
+    }
     return 0;
 }
 
@@ -140,13 +149,13 @@ static int __init
 
 my_init(void) {
     // set default separators
-    separators = (char *) kmalloc(sizeof(char *) * 2, GFP_KERNEL);
-    if (!separators) {
-        printk(KERN_ERR
-        "%s: kmalloc() failed\n", DEVNAME);
-        return -ENOMEM;
-    }
-    separators = ",:";
+//    device.separators = (char *) kmalloc(sizeof(char *) * 2, GFP_KERNEL);
+//    if (!device.separators) {
+//        printk(KERN_ERR
+//        "%s: kmalloc() failed\n", DEVNAME);
+//        return -ENOMEM;
+//    }
+//    device.separators = ",:";
     // other stuff
     const char *s = "Hello world!\n";
     int err;

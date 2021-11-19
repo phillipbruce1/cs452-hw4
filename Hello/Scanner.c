@@ -97,7 +97,7 @@ static ssize_t read(struct file *filp,
  * @param f_pos
  * @return
  */
-static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) {
+static ssize_t write(struct file *filp, const char *buf, size_t count, loff_t *f_pos) {
     File *file = filp->private_data;
     if (file->separators == 0) {
         file->separators = (char *) kmalloc(sizeof(char *) * strlen(buf), GFP_KERNEL);
@@ -106,6 +106,7 @@ static ssize_t write(struct file *filp, char *buf, size_t count, loff_t *f_pos) 
             return -ENOMEM;
         }
         // TODO: set separators = buf
+        printk("strlen: %d\n", strlen(buf));
         return strlen(buf);
     } else {
         int n = strlen(buf);
@@ -142,6 +143,7 @@ static struct file_operations ops = {
         .open=open,
         .release=release,
         .read=read,
+        .write=write,
         .unlocked_ioctl=ioctl,
         .owner=THIS_MODULE
 };

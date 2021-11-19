@@ -35,9 +35,9 @@ int main() {
       ERR("write() of data failed");
     free(line);
     while ((len=read(scanner,buf,max))>=0) {
-//      buf[len]=0;
       printf("%s%s",buf,(len ? "" : "\n"));
     }
+    break;
   }
 
   close(scanner);

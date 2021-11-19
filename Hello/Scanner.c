@@ -91,6 +91,7 @@ static ssize_t read(struct file *filp,
         printk("%s\n", file->s[i]);
         int k;
         for (k = 0; k < strlen(file->separators); k++) {
+            printk("separator: %s\n", file->separators[k]);
             // if token found
             if (file->s[i] == file->separators[k]) {
                 // get token
@@ -190,16 +191,7 @@ static struct file_operations ops = {
 static int __init
 
 my_init(void) {
-    // set default separators
-//    device.separators = (char *) kmalloc(sizeof(char *) * 2, GFP_KERNEL);
-//    if (!device.separators) {
-//        printk(KERN_ERR
-//        "%s: kmalloc() failed\n", DEVNAME);
-//        return -ENOMEM;
-//    }
-//    device.separators = ",:";
-    // other stuff
-    const char *s = "Hello world!\n";
+    const char *s = "";
     int err;
     device.s = (char *) kmalloc(strlen(s) + 1, GFP_KERNEL);
     if (!device.s) {

@@ -119,19 +119,9 @@ static ssize_t read(struct file *filp,
         return 0;
     } else {
         // else end of file has been reached (-1)
-        file->s = 0;
-        return -1;
-    }
-
-    // TODO: get most tokens within n characters
-    // TODO: move pointer
-    // return rest of input with 0 to signify end of token
-    if (copy_to_user(buf, file->s, n)) {
-        printk(KERN_ERR
-        "%s: copy_to_user() failed\n", DEVNAME);
+        file->s = "";
         return 0;
     }
-    return n;
 }
 
 /**

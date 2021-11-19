@@ -53,7 +53,8 @@ static int open(struct inode *inode, struct file *filp) {
         "%s: kmalloc() failed\n", DEVNAME);
         return -ENOMEM;
     }
-    file->separators = ",;";
+    char *val = ",;";
+    strcpy(file->separators, val);
     filp->private_data = file;
     return 0;
 }

@@ -100,6 +100,7 @@ static ssize_t read(struct file *filp,
                     token[j] = file->s[j];
                 // copy token to user space buffer
                 copy_to_user(buf, token, n);
+                buf[n] = 0;
                 // remove token from file
                 file->s = file->s[i + 1];
                 // return 0 for end of token
@@ -111,15 +112,18 @@ static ssize_t read(struct file *filp,
     if (copy_to_user(buf, file->s, n)) {
         printk(KERN_ERR
         "%s: copy_to_user() failed\n", DEVNAME);
+        buf[n] = 0;
         return 0;
     }
     // n < strlen, then token is too long for count (0)
     if (n < strlen(file->s)) {
         memmove((void *) file->s, (void *) file->s[n + 1], strlen(file->s) - n);
-        return 0;
+        buf[n] = 0;
+        return n;
     } else {
         // else end of file has been reached (-1)
         file->s = "";
+        buf[n] = 0;
         return 0;
     }
 }

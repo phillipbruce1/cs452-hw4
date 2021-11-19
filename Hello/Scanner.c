@@ -67,6 +67,10 @@ static int release(struct inode *inode, struct file *filp) {
 
 /**
  * Copy from buf to file from kernel to user space
+ *
+ * Returns 0 for end of token, -1 for end of file,
+ * or length of data returned if token length > count
+ *
  * @param filp
  * @param buf
  * @param count
@@ -82,27 +86,46 @@ static ssize_t read(struct file *filp,
     if (n == 0)
         return -1;
     n = (n < count ? n : count);
-    for (int i = 0; i < n; i++) {
-        for (int k = 0; k < strlen(file->separators); k++) {
+    int i;
+    for (i = 0; i < n; i++) {
+        printk("%s\n", file->s[i]);
+        int k;
+        for (k = 0; k < strlen(file->separators); k++) {
             // if token found
             if (file->s[i] == file->separators[k]) {
                 // get token
                 char token[i];
-                for (int j = 0; j < i; j++)
+                int j;
+                for (j = 0; j < i; j++)
                     token[j] = file->s[j];
                 // copy token to user space buffer
-                copy_to_user(buf, token, n)
+                copy_to_user(buf, token, n);
                 // remove token from file
                 file->s = file->s[i + 1];
-                // return length of token
-                return i;
+                // return 0 for end of token
+                return 0;
             }
         }
     }
     // if this point reached, there is no separator within n characters
+    if (copy_to_user(buf, file->s, n)) {
+        printk(KERN_ERR
+        "%s: copy_to_user() failed\n", DEVNAME);
+        return 0;
+    }
+    // n < strlen, then token is too long for count (0)
+    if (n < strlen(file->s)) {
+        memmove((void *) file->s, (void *) file->s[n + 1], strlen(file->s) - n);
+        return 0;
+    } else {
+        // else end of file has been reached (-1)
+        file->s = 0;
+        return -1;
+    }
+
     // TODO: get most tokens within n characters
     // TODO: move pointer
-    // return rest of input with 0 to signify EOF
+    // return rest of input with 0 to signify end of token
     if (copy_to_user(buf, file->s, n)) {
         printk(KERN_ERR
         "%s: copy_to_user() failed\n", DEVNAME);

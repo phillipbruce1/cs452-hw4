@@ -10,7 +10,6 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("BSU CS 452 HW4");
 MODULE_AUTHOR("<phillipbruce@u.boisestate.edu>");
 
-// TODO: figure out why seg fault on onyx and pkill on local vm - somewhere in ioctl?
 
 typedef struct {
     dev_t devno;

@@ -22,7 +22,6 @@ typedef struct {
 typedef struct {
     char *s;
     char *separators;
-    int *newSeparators;
 } File;                /* per-open() data */
 
 static Device device;
@@ -80,7 +79,30 @@ static ssize_t read(struct file *filp,
                     loff_t *f_pos) {
     File *file = filp->private_data;
     int n = strlen(file->s);
+    if (n == 0)
+        return -1;
     n = (n < count ? n : count);
+    for (int i = 0; i < n; i++) {
+        for (int k = 0; k < strlen(file->separators); k++) {
+            // if token found
+            if (file->s[i] == file->separators[k]) {
+                // get token
+                char token[i];
+                for (int j = 0; j < i; j++)
+                    token[j] = file->s[j];
+                // copy token to user space buffer
+                copy_to_user(buf, token, n)
+                // remove token from file
+                file->s = file->s[i + 1];
+                // return length of token
+                return i;
+            }
+        }
+    }
+    // if this point reached, there is no separator within n characters
+    // TODO: get most tokens within n characters
+    // TODO: move pointer
+    // return rest of input with 0 to signify EOF
     if (copy_to_user(buf, file->s, n)) {
         printk(KERN_ERR
         "%s: copy_to_user() failed\n", DEVNAME);
@@ -105,8 +127,8 @@ static ssize_t write(struct file *filp, const char *buf, size_t count, loff_t *f
             printk("%s: kmalloc() failed\n", DEVNAME);
             return -ENOMEM;
         }
-        // TODO: set separators = buf
-        printk("strlen: %d\n", strlen(buf));
+        strcpy(file->separators, buf);
+        printk("separators: %s\n", file->separators);
         return strlen(buf);
     } else {
         int n = strlen(buf);
